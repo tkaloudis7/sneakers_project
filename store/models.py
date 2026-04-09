@@ -1,30 +1,38 @@
 from django.db import models
-from django.contrib.auth.models import User
 
+class Category(models.Model):
+    name = models.CharField(max_length=100, verbose_name="Category Name")
 
-class Brand(models.Model):
-    name = models.CharField(max_length=100)
+    class Meta:
+        verbose_name_plural = "Categories"
 
+    def __str__(self):
+        return self.name
+
+class SubCategory(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="subcategories", verbose_name="Parent Category")
+    name = models.CharField(max_length=100, verbose_name="Sub-Category Name")
+
+    class Meta:
+        verbose_name_plural = "Subcategories"
+
+    def __str__(self):
+        return f"{self.category.name} -> {self.name}"
+
+class Size(models.Model):
+    name = models.CharField(max_length=10, verbose_name="Size")
 
     def __str__(self):
         return self.name
 
 class Sneaker(models.Model):
-    brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
-    name = models.CharField(max_length=200)
-    description = models.TextField()
-    price = models.DecimalField(max_digits=6, decimal_places=2)
-    size = models.IntegerField()
-    image = models.ImageField(upload_to='sneakers/')
+    subcategory = models.ForeignKey(SubCategory, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Sub-Category")
+    name = models.CharField(max_length=150, verbose_name="Model Name")
+    brand = models.CharField(max_length=50, verbose_name="Brand")
+    price = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Price")
+    description = models.TextField(blank=True, null=True, verbose_name="Description")
+    image = models.ImageField(upload_to='sneakers_img/', blank=True, null=True, verbose_name="Image")
+    sizes = models.ManyToManyField(Size, blank=True, verbose_name="Available Sizes")
 
     def __str__(self):
-        return f"{self.brand.name} {self.name}"
-
-class Review(models.Model):
-    sneaker = models.ForeignKey(Sneaker, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    rating = models.IntegerField()
-    comment = models.TextField()
-
-    def __str__(self):
-        return f"Review by {self.user.username} for {self.sneaker.name}"
+        return f"{self.brand} - {self.name}"

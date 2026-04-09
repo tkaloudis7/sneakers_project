@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sneaker Store</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+
+<h1 style="text-align: center;">Welcome to our Sneaker Store</h1>
+<hr>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+
+    {% for sneaker in sneakers %}
+    <div style="background-color: white; border-radius: 8px; padding: 15px; width: 250px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+
+        {% if sneaker.image %}
+        <img src="{{ sneaker.image.url }}" alt="{{ sneaker.name }}" style="width: 100%; border-radius: 5px;">
+        {% endif %}
+
+        <h3 style="margin-bottom: 5px;">{{ sneaker.brand }} {{ sneaker.name }}</h3>
+
+        <p style="color: gray; font-size: 14px; margin-top: 0;">
+            {{ sneaker.subcategory.category.name }} / {{ sneaker.subcategory.name }}
+        </p>
+
+        <h2 style="color: #e74c3c;">${{ sneaker.price }}</h2>
+
+        <p style="font-size: 14px;"><strong>Sizes:</strong>
+            {% for size in sneaker.sizes.all %}
+            {{ size.name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </p>
+
+    </div>
+    {% endfor %}
+
+</div>
+
+</body>
+</html>
