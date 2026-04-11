@@ -1,41 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Sneaker Store</title>
-</head>
-<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+{% extends 'layout.html' %}
 
-<h1 style="text-align: center;">Welcome to our Sneaker Store</h1>
-<hr>
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center mb-4">Welcome to our Sneaker Shop</h1>
+    <hr>
 
-<div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4 justify-content-center">
 
-    {% for sneaker in sneakers %}
-    <div style="background-color: white; border-radius: 8px; padding: 15px; width: 250px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        {% for sneaker in sneakers %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
 
-        {% if sneaker.image %}
-        <img src="{{ sneaker.image.url }}" alt="{{ sneaker.name }}" style="width: 100%; border-radius: 5px;">
-        {% endif %}
+                {% if sneaker.image %}
+                <img src="{{ sneaker.image.url }}" class="card-img-top p-2" alt="{{ sneaker.name }}">
+                {% endif %}
 
-        <h3 style="margin-bottom: 5px;">{{ sneaker.brand }} {{ sneaker.name }}</h3>
+                <div class="card-body">
+                    <h5 class="card-title">{{ sneaker.brand }} {{ sneaker.name }}</h5>
 
-        <p style="color: gray; font-size: 14px; margin-top: 0;">
-            {{ sneaker.subcategory.category.name }} / {{ sneaker.subcategory.name }}
-        </p>
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        {{ sneaker.subcategory.category.name }} / {{ sneaker.subcategory.name }}
+                    </h6>
 
-        <h2 style="color: #e74c3c;">${{ sneaker.price }}</h2>
+                    <h4 class="text-danger mt-3">${{ sneaker.price }}</h4>
 
-        <p style="font-size: 14px;"><strong>Sizes:</strong>
-            {% for size in sneaker.sizes.all %}
-            {{ size.name }}{% if not forloop.last %}, {% endif %}
-            {% endfor %}
-        </p>
+                    <p class="card-text mt-3">
+                        <strong>Sizes:</strong>
+                        {% for size in sneaker.sizes.all %}
+                        {{ size.name }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </p>
+                </div>
+
+            </div>
+        </div>
+        {% endfor %}
 
     </div>
-    {% endfor %}
-
 </div>
-
-</body>
-</html>
+{% endblock %}

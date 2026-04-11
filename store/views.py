@@ -1,7 +1,9 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from .models import Sneaker
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 
 #registration view
 def register_view(request):
@@ -34,9 +36,25 @@ def login_view(request):
 
 
 def home(request):
-    #fetch all sneakers from the database
-    all_sneakers = Sneaker.objects.all()
+    query = request.GET.get('q')
 
-    #pass the data to the template context
+    #checking if keyword exists
+    if query:
+        all_sneakers = Sneaker.objects.filter(
+            Q(brand__icontains=query) | Q(name__icontains=query)
+        )
+    else:
+        all_sneakers = Sneaker.objects.all()
+
     context = {'sneakers': all_sneakers}
     return render(request, 'store/home.html', context)
+
+def logout_view(request):
+    logout(request)
+    return redirect('/')
+
+
+# profile view (only for users)
+@login_required(login_url='/login/')
+def profile_view(request):
+    return render(request, 'profile.html')

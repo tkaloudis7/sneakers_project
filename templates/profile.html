@@ -1,0 +1,23 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h4 class="mb-0">My Profile</h4>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Welcome back, {{ user.username }}!</h5>
+                <hr>
+                <p class="card-text"><strong>Username:</strong> {{ user.username }}</p>
+                <p class="card-text"><strong>Date Joined:</strong> {{ user.date_joined|date:"F j, Y" }}</p>
+
+                <div class="d-grid gap-2 mt-4">
+                    <a href="/" class="btn btn-outline-primary">Back to Store</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
