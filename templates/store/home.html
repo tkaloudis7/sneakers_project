@@ -5,37 +5,155 @@
     <h1 class="text-center mb-4">Welcome to our Sneaker Shop</h1>
     <hr>
 
-    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4 justify-content-center">
+    <div class="card shadow-sm border-0 bg-light p-4 mb-5">
+        <h5 class="mb-3 font-weight-bold">Advanced Filters</h5>
+        <form method="GET" action="/" class="row g-3">
 
+            <div class="col-md-3">
+                <select name="brand" class="form-select">
+                    <option value="">All Brands</option>
+                    <option value="Nike" {% if request.GET.brand == "Nike" %}selected{% endif %}>Nike</option>
+                    <option value="Adidas" {% if request.GET.brand == "Adidas" %}selected{% endif %}>Adidas</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"i" %}selected{% endif %}>
+                    {{ cat.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <select name="size" class="form-select">
+                    <option value="">All Sizes</option>
+                    {% for size in all_sizes %}
+                    <option value="{{ size.id }}" {% if request.GET.size == size.id|stringformat:"i" %}selected{% endif %}>
+                    EU {{ size.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <div class="input-group">
+                    <span class="input-group-text">Min $</span>
+                    <input type="number" name="min_price" class="form-control" value="{{ request.GET.min_price }}" min="0" max="9999" oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4);">
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <div class="input-group">
+                    <span class="input-group-text">Max $</span>
+                    <input type="number" name="max_price" class="form-control" value="{{ request.GET.max_price }}" min="0" max="9999" oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4);">
+                </div>
+            </div>
+
+            <div class="col-md-12 d-flex justify-content-center gap-2 mt-4">
+                <button type="submit" class="btn btn-primary px-4">Apply Filters</button>
+                <a href="/" class="btn btn-outline-secondary px-4">Clear</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4 justify-content-center">
         {% for sneaker in sneakers %}
         <div class="col">
             <div class="card h-100 shadow-sm">
-
                 {% if sneaker.image %}
                 <img src="{{ sneaker.image.url }}" class="card-img-top p-2" alt="{{ sneaker.name }}">
                 {% endif %}
-
                 <div class="card-body">
                     <h5 class="card-title">{{ sneaker.brand }} {{ sneaker.name }}</h5>
-
                     <h6 class="card-subtitle mb-2 text-muted">
                         {{ sneaker.subcategory.category.name }} / {{ sneaker.subcategory.name }}
                     </h6>
-
                     <h4 class="text-danger mt-3">${{ sneaker.price }}</h4>
 
-                    <p class="card-text mt-3">
+                    <p class="card-text mt-3 mb-2">
                         <strong>Sizes:</strong>
                         {% for size in sneaker.sizes.all %}
                         {{ size.name }}{% if not forloop.last %}, {% endif %}
                         {% endfor %}
                     </p>
-                </div>
 
+                    <hr class="mt-2 mb-2">
+
+                    <h6 style="font-size: 14px;">Reviews:</h6>
+                    {% for review in sneaker.reviews.all %}
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <p class="mb-0" style="font-size: 12px;">
+                            <strong>{{ review.user.username }}:</strong> {{ review.comment }} ({{ review.rating }}★)
+                        </p>
+
+                        {% if user == review.user %}
+                        <form method="POST" action="{% url 'delete_review' review.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm text-danger p-0 ms-2" style="font-size: 11px; background:none; border:none;" title="Delete Review">
+                                ❌
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-muted mb-1" style="font-size: 11px;">No reviews yet.</p>
+                    {% endfor %}
+
+                    {% if user.is_authenticated %}
+                    {% if sneaker.id in user_reviewed_sneakers %}
+                    <p class="text-success mt-2 mb-0" style="font-size: 11px;">
+                        <em>✓ You have already reviewed this product.</em>
+                    </p>
+                    {% else %}
+                    <form method="POST" action="{% url 'add_review' sneaker.id %}" class="mt-3">
+                        {% csrf_token %}
+                        <select name="rating" class="form-select form-select-sm mb-1" required>
+                            <option value="5" selected>5 Stars ⭐⭐⭐⭐⭐</option>
+                            <option value="4">4 Stars ⭐⭐⭐⭐</option>
+                            <option value="3">3 Stars ⭐⭐⭐</option>
+                            <option value="2">2 Stars ⭐⭐</option>
+                            <option value="1">1 Star ⭐</option>
+                        </select>
+                        <input type="text" name="comment" placeholder="Write a review..." class="form-control form-control-sm mb-1" required>
+                        <button type="submit" class="btn btn-sm btn-dark w-100" style="font-size: 12px;">Post Review</button>
+                    </form>
+                    {% endif %}
+                    {% else %}
+                    <p class="text-muted mt-2 mb-0" style="font-size: 11px;"><em>Log in to post a review.</em></p>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+
+        {% empty %}
+        <div class="col-12 text-center mt-5 mb-5">
+            <h3 class="text-muted">No results found!</h3>
+            <p>Try adjusting your filters or <a href="/" class="text-primary text-decoration-none">clear them</a> to see more.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <hr class="my-5">
+    <h3 class="mb-4">Suggested for You</h3>
+    <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
+        {% for rec in recommendations %}
+        <div class="col">
+            <div class="card h-100 border-0 bg-light">
+                {% if rec.image %}
+                <img src="{{ rec.image.url }}" class="card-img-top p-3" alt="{{ rec.name }}">
+                {% endif %}
+                <div class="card-body text-center">
+                    <h6 class="card-title">{{ rec.brand }} {{ rec.name }}</h6>
+                    <p class="text-danger font-weight-bold">${{ rec.price }}</p>
+                </div>
             </div>
         </div>
         {% endfor %}
-
     </div>
 </div>
 {% endblock %}

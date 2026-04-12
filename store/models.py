@@ -36,3 +36,14 @@ class Sneaker(models.Model):
 
     def __str__(self):
         return f"{self.brand} - {self.name}"
+
+
+class Review(models.Model):
+    sneaker = models.ForeignKey(Sneaker, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    comment = models.TextField()
+    rating = models.IntegerField(default=5) # 1-5 star reviews
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} on {self.sneaker.name}"
