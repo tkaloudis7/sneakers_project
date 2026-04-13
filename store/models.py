@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Category(models.Model):
     name = models.CharField(max_length=100, verbose_name="Category Name")
@@ -47,3 +48,24 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.user.username} on {self.sneaker.name}"
+
+
+class Cart(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Cart of {self.user.username}"
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
+    sneaker = models.ForeignKey(Sneaker, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    selected_size = models.CharField(max_length=10, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.quantity} x {self.sneaker.name}"
+
+    @property
+    def total_price(self):
+        return self.quantity * self.sneaker.price

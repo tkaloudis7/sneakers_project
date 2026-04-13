@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout
-from .models import Sneaker, Category, Size, Review
+from .models import Sneaker, Category, Size, Review, Cart, CartItem
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 
@@ -26,7 +26,6 @@ def login_view(request):
             return redirect('/')
     else:
         form = AuthenticationForm()
-
     return render(request, 'login.html', {'form': form})
 
 
@@ -35,7 +34,6 @@ def home(request):
     categories = Category.objects.all()
     all_sizes = Size.objects.all()
 
-    #parameters
     query = request.GET.get('q')
     category_id = request.GET.get('category')
     brand = request.GET.get('brand')
@@ -43,7 +41,7 @@ def home(request):
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
 
-    #filters
+#filters
     if query:
         all_sneakers = all_sneakers.filter(Q(brand__icontains=query) | Q(name__icontains=query))
     if category_id:
@@ -57,7 +55,6 @@ def home(request):
     if max_price:
         all_sneakers = all_sneakers.filter(price__lte=max_price)
 
-    #recommendations
     if category_id:
         recommendations = Sneaker.objects.filter(subcategory__category_id=category_id).order_by('?')[:3]
     elif query:
@@ -67,7 +64,6 @@ def home(request):
     else:
         recommendations = Sneaker.objects.order_by('?')[:3]
 
-    #reviews of the user
     user_reviewed_sneakers = []
     if request.user.is_authenticated:
         user_reviewed_sneakers = Review.objects.filter(user=request.user).values_list('sneaker_id', flat=True)
@@ -85,14 +81,25 @@ def logout_view(request):
     logout(request)
     return redirect('/')
 
-
-# profile view (only for users)
+#profile view
 @login_required(login_url='/login/')
 def profile_view(request):
     return render(request, 'profile.html')
 
+#product details page
+def product_detail(request, sneaker_id):
+    sneaker = get_object_or_404(Sneaker, id=sneaker_id)
+    has_reviewed = False
+    if request.user.is_authenticated:
+        has_reviewed = Review.objects.filter(sneaker=sneaker, user=request.user).exists()
 
-#reviews saving
+    context = {
+        'sneaker': sneaker,
+        'has_reviewed': has_reviewed
+    }
+    return render(request, 'store/product_detail.html', context)
+
+#review management
 @login_required(login_url='/login/')
 def add_review(request, sneaker_id):
     if request.method == "POST":
@@ -104,9 +111,7 @@ def add_review(request, sneaker_id):
         except (ValueError, TypeError):
             rating = 5
 
-        #checking if the user has already reviewed the product
         has_reviewed = Review.objects.filter(sneaker_id=sneaker_id, user=request.user).exists()
-
         if comment and not has_reviewed:
             Review.objects.create(
                 sneaker_id=sneaker_id,
@@ -114,13 +119,93 @@ def add_review(request, sneaker_id):
                 comment=comment,
                 rating=rating
             )
-    return redirect('/')
+    return redirect('product_detail', sneaker_id=sneaker_id)
 
-#delete review
 @login_required(login_url='/login/')
 def delete_review(request, review_id):
     if request.method == "POST":
         review = get_object_or_404(Review, id=review_id)
+        sneaker_id = review.sneaker.id
         if request.user == review.user:
             review.delete()
-    return redirect('/')
+    return redirect('product_detail', sneaker_id=sneaker_id)
+
+#cart
+@login_required(login_url='/login/')
+def add_to_cart(request, sneaker_id):
+    if request.method == "POST":
+        sneaker = get_object_or_404(Sneaker, id=sneaker_id)
+        selected_size = request.POST.get('size') #get size
+
+        try:
+            quantity = int(request.POST.get('quantity', 1))
+        except ValueError:
+            quantity = 1
+
+        #max quantity 10
+        if quantity > 10:
+            quantity = 10
+        elif quantity < 1:
+            quantity = 1
+
+        cart, created = Cart.objects.get_or_create(user=request.user)
+
+        cart_item, item_created = CartItem.objects.get_or_create(
+            cart=cart,
+            sneaker=sneaker,
+            selected_size=selected_size,
+            defaults={'quantity': quantity}
+        )
+
+        if not item_created:
+            cart_item.quantity += quantity
+            if cart_item.quantity > 10:
+                cart_item.quantity = 10
+            cart_item.save()
+
+    return redirect('cart_view')
+
+@login_required(login_url='/login/')
+def cart_view(request):
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    total_cart_price = sum(item.total_price for item in cart.items.all())
+
+    context = {
+        'cart': cart,
+        'total_cart_price': total_cart_price
+    }
+    return render(request, 'store/cart.html', context)
+
+@login_required(login_url='/login/')
+def update_cart(request, item_id):
+    if request.method == "POST":
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        try:
+            new_quantity = int(request.POST.get('quantity'))
+        except ValueError:
+            new_quantity = 1
+
+        if new_quantity > 10:
+            new_quantity = 10
+        elif new_quantity < 1:
+            new_quantity = 1
+
+        cart_item.quantity = new_quantity
+        cart_item.save()
+    return redirect('cart_view')
+
+@login_required(login_url='/login/')
+def remove_from_cart(request, item_id):
+    if request.method == "POST":
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        cart_item.delete()
+    return redirect('cart_view')
+
+#checkout simulation
+@login_required(login_url='/login/')
+def checkout_view(request):
+    if request.method == "POST":
+        cart = get_object_or_404(Cart, user=request.user)
+        cart.items.all().delete()
+        return render(request, 'store/checkout_success.html')
+    return redirect('cart_view')
