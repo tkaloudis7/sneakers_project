@@ -1,21 +1,74 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">
-                <h4 class="mb-0">My Profile</h4>
-            </div>
-            <div class="card-body">
-                <h5 class="card-title">Welcome back, {{ user.username }}!</h5>
-                <hr>
-                <p class="card-text"><strong>Username:</strong> {{ user.username }}</p>
-                <p class="card-text"><strong>Date Joined:</strong> {{ user.date_joined|date:"F j, Y" }}</p>
+<div class="container mt-5 mb-5">
+    <h2 class="mb-4 dashboard-header">My Profile</h2>
 
-                <div class="d-grid gap-2 mt-4">
-                    <a href="/" class="btn btn-outline-primary">Back to Store</a>
+    <div class="row">
+        <div class="col-md-5 mb-4">
+            <div class="card shadow-sm border-0 p-4">
+                <h4 class="mb-3">Account Details</h4>
+
+                <form method="POST" action="/profile/">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Username (Cannot be changed)</label>
+                        <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Date Joined</label>
+                        <input type="text" class="form-control" value="{{ user.date_joined|date:'M d, Y' }}" disabled>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">First Name</label>
+                        <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" name="email" class="form-control" value="{{ user.email }}">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+
+                    <a href="/" class="btn btn-outline-secondary w-100 mt-2">Back to Store</a>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0 p-4 h-100">
+                <h4 class="mb-4">Recent Activity</h4>
+
+                <h6 class="text-muted mb-3">Your Latest Reviews</h6>
+
+                {% if user_reviews %}
+                <div class="bg-light p-3 rounded">
+                    {% for review in user_reviews %}
+                    <div class="review-item">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ review.sneaker.brand }} {{ review.sneaker.name }}</strong>
+                            <span class="text-warning">{{ review.rating }} ★</span>
+                        </div>
+                        <p class="mb-0 text-muted" style="font-size: 14px;">"{{ review.comment }}"</p>
+                        <small><a href="{% url 'product_detail' review.sneaker.id %}">View Product</a></small>
+                    </div>
+                    {% endfor %}
                 </div>
+                {% else %}
+                <div class="alert alert-secondary text-center">
+                    You haven't left any reviews yet.
+                </div>
+                {% endif %}
+
             </div>
         </div>
     </div>

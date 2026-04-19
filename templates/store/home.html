@@ -63,7 +63,7 @@
     <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4 justify-content-center">
         {% for sneaker in sneakers %}
         <div class="col">
-            <div class="card h-100 shadow-sm">
+            <div class="card h-100 shadow-sm sneaker-card">
 
                 <a href="{% url 'product_detail' sneaker.id %}">
                     {% if sneaker.image %}
@@ -111,7 +111,7 @@
         <div class="col">
 
             <a href="{% url 'product_detail' rec.id %}" class="text-decoration-none text-dark">
-                <div class="card h-100 border-0 bg-light shadow-sm">
+                <div class="card h-100 border-0 bg-light shadow-sm sneaker-card">
                     {% if rec.image %}
                     <img src="{{ rec.image.url }}" class="card-img-top p-3" alt="{{ rec.name }}">
                     {% endif %}

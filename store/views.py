@@ -84,7 +84,19 @@ def logout_view(request):
 #profile view
 @login_required(login_url='/login/')
 def profile_view(request):
-    return render(request, 'profile.html')
+    if request.method == 'POST':
+        user = request.user
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.email = request.POST.get('email', '')
+        user.save()
+        return redirect('/profile/')
+
+    user_reviews = Review.objects.filter(user=request.user).order_by('-id')[:5]
+    context = {
+        'user_reviews': user_reviews
+    }
+    return render(request, 'profile.html', context)
 
 #product details page
 def product_detail(request, sneaker_id):
